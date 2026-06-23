@@ -1,0 +1,14 @@
+[Unit]
+Description=Snovtracker copy engine (DRY-RUN)
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/node /root/scanner/copy-engine.js
+WorkingDirectory=/root/scanner
+Restart=always
+RestartSec=5
+StandardOutput=append:/root/scanner/copy-engine.log
+StandardError=append:/root/scanner/copy-engine.log
+
+[Install]
+WantedBy=multi-user.target

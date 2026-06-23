@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SolMirror — dizaino variantai</title>
+<style>
+  :root{ --bg:#080b12; --card:#10151f; --card2:#141b28; --line:#1e2738; --line2:#2a3650; --text:#eef2f8; --mut:#7e89a0; --grn:#1ed7a0; --red:#f0556b; --gold:#ffcf5c; --acc:#6c8cff; }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#15203a 0%,var(--bg) 55%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:30px 20px 80px}
+  .brand{font-size:24px;font-weight:800;letter-spacing:-.4px}.brand span{background:linear-gradient(90deg,#6c8cff,#1ed7a0);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .vlabel{margin:46px 0 4px;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--acc);font-weight:700}
+  .vdesc{color:var(--mut);font-size:13px;margin-bottom:18px}
+  .addr{font-family:ui-monospace,monospace}
+  .pos{color:var(--grn)} .neg{color:var(--red)} .mut{color:var(--mut)}
+  .asset{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--mut);border:1px solid var(--line2);border-radius:6px;padding:1px 6px;margin-left:3px}
+  .spark{height:34px;width:100%}
+  .v1{display:flex;flex-direction:column;gap:10px}
+  .row{display:grid;grid-template-columns:42px 1fr 120px 120px 130px;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 18px}
+  .rk{font-size:18px;font-weight:800;color:var(--mut);text-align:center}
+  .row.top .rk{color:var(--gold)}
+  .who .nm{font-weight:600;font-size:15px}.who .sub{font-size:12px;color:var(--mut);margin-top:2px}
+  .ret{font-size:22px;font-weight:800;letter-spacing:-.5px;text-align:right}
+  .mini{display:flex;gap:14px;justify-content:flex-end}.mini .l{font-size:10px;color:var(--mut);text-transform:uppercase}.mini .v{font-size:14px;font-weight:600}
+  .copy{background:linear-gradient(90deg,#6c8cff,#5a78f0);border:none;color:#fff;font-weight:600;padding:9px 0;border-radius:10px;cursor:pointer;font-size:13px;width:100%}
+  .v2{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:720px){.v2{grid-template-columns:1fr}}
+  .gcard{border-radius:18px;padding:1px;background:linear-gradient(160deg,rgba(108,140,255,.5),rgba(30,215,160,.18) 40%,rgba(255,255,255,.04))}
+  .gcard .in{background:linear-gradient(180deg,#121826,#0e131d);border-radius:17px;padding:18px;position:relative}
+  .rkb{position:absolute;top:14px;right:14px;font-size:11px;font-weight:700;color:var(--mut)}
+  .gcard.p1 .rkb{color:var(--gold)}
+  .gret{font-size:30px;font-weight:800;letter-spacing:-1px;margin:10px 0 2px}
+  .grow{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-top:10px}.grow b{display:block;color:var(--text);font-size:13px}
+  .hero{display:grid;grid-template-columns:1.1fr 1fr;border-radius:20px;overflow:hidden;border:1px solid var(--line2);margin-bottom:14px}
+  @media(max-width:720px){.hero{grid-template-columns:1fr}}
+  .hl{background:linear-gradient(150deg,#1b2a4d,#101726);padding:24px}
+  .badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0a1020;background:linear-gradient(90deg,#ffe89a,#ffb347);padding:3px 10px;border-radius:999px}
+  .hret{font-size:46px;font-weight:800;letter-spacing:-1.5px;margin:14px 0 0}
+  .hr{background:var(--card);padding:24px;display:flex;flex-direction:column;justify-content:center;gap:12px}
+  .hstat{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:9px}.hstat .l2{color:var(--mut);font-size:13px}.hstat .v2{font-weight:700}
+  .tbl{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .tr{display:grid;grid-template-columns:36px 1fr 120px 90px 110px;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line)}
+  .tr:last-child{border-bottom:none}.big2{font-weight:700;font-size:15px;text-align:right}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">Sol<span>Mirror</span></div>
+  <div class="mut" style="font-size:13px;margin-top:4px">3 dizaino kryptys — palygink</div>
+  <div class="vlabel">Variantas 1 — „Sleek rows"</div>
+  <div class="vdesc">Pilno pločio eilutės, sparkline, didelis skaičius.</div>
+  <div class="v1" id="v1"></div>
+  <div class="vlabel">Variantas 2 — „Glass cards"</div>
+  <div class="vdesc">Gradientinės „stiklo" kortelės.</div>
+  <div class="v2" id="v2"></div>
+  <div class="vlabel">Variantas 3 — „Hero + lentelė"</div>
+  <div class="vdesc">#1 didelis „hero", likę elegantiškoje lentelėje.</div>
+  <div id="v3"></div>
+</div>
+<script>
+var D=[
+  {w:"Hqtpxt1QB9yyckwyCFJCMW86Q449xmmAFg5Dg5p46hvp",a:"BTC/SOL/ETH",ret:124.4,pnl:905841,win:49,lev:34,tpd:2.2,act:"šiandien",d90:"+14.9%"},
+  {w:"H3ogGm2QeDiELWVVo5pyn9ddZhZyxpoGzgEFe6Wng4BQ",a:"SOL/ETH/BTC",ret:22.6,pnl:601289,win:66,lev:3.5,tpd:0.07,act:"šiandien"},
+  {w:"LseMdfJ2AAwFFxecgx5H6efyQTz4iTbrcDX57AFYkis",a:"BTC/SOL/ETH",ret:50.6,pnl:6287,win:50,lev:5,tpd:2.8,act:"prieš 1 d."},
+  {w:"DNXCMqMLYffWje4vyfhJFE8bowJMCrwDw64PeeS7N4FL",a:"SOL/ETH/BTC",ret:17.9,pnl:10338,win:50,lev:11,tpd:0.3,act:"prieš 2 d."},
+  {w:"GdDtLdfbsFANzoui8S3S9vek8RVyeTtF4vXYFQcaoxan",a:"SOL",ret:14.1,pnl:32639,win:68,lev:52,tpd:0.1,act:"prieš 4 d."},
+  {w:"3xr739r7j67dVYrU6K6em258fpkSF1NFPNW7xDhsc3YM",a:"ETH",ret:9.2,pnl:4253,win:87,lev:62,tpd:0.2,act:"prieš 6 d."}
+];
+function sh(w){return w.slice(0,4)+"…"+w.slice(-4);}
+function m(n){return (n<0?"-$":"$")+Math.abs(Math.round(n)).toLocaleString("en-US");}
+function pc(n){return (n>=0?"+":"")+n+"%";}
+function spark(seed,col){
+  var pts=[],v=50,i;for(i=0;i<24;i++){v+=Math.sin(i*seed)*4+(i>18?(i-18)*6:0);pts.push(v);}
+  var mn=Math.min.apply(null,pts),mx=Math.max.apply(null,pts),W=120,H=34;
+  var d=pts.map(function(p,j){return (j?"L":"M")+(j*W/23).toFixed(1)+" "+(H-2-(p-mn)/(mx-mn||1)*(H-4)).toFixed(1);}).join(" ");
+  return '<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none"><path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="2"/></svg>';
+}
+var C=function(r){return r>=0?"#1ed7a0":"#f0556b";};
+
+var h1="";
+D.slice(0,5).forEach(function(t,i){
+  h1+='<div class="row'+(i===0?" top":"")+'">'+
+    '<div class="rk">'+(i+1)+'</div>'+
+    '<div class="who"><div class="nm addr">'+sh(t.w)+'<span class="asset">'+t.a.split("/")[0]+'</span></div><div class="sub">aktyvus '+t.act+' · '+t.tpd+' sand./d</div></div>'+
+    spark(0.6+i*0.2,C(t.ret))+
+    '<div class="mini"><div><div class="l">Win</div><div class="v">'+t.win+'%</div></div><div><div class="l">Svertas</div><div class="v">'+t.lev+'x</div></div></div>'+
+    '<div><div class="ret '+(t.ret>=0?"pos":"neg")+'">'+pc(t.ret)+'</div><div class="mut" style="text-align:right;font-size:12px">'+m(t.pnl)+'</div></div>'+
+  '</div>';
+});
+document.getElementById("v1").innerHTML=h1;
+
+var h2="";
+D.slice(0,6).forEach(function(t,i){
+  h2+='<div class="gcard'+(i===0?" p1":"")+'"><div class="in">'+
+    '<span class="rkb">#'+(i+1)+'</span>'+
+    '<div class="addr" style="font-size:13px">'+sh(t.w)+'</div><div class="mut" style="font-size:11px">'+t.a+'</div>'+
+    '<div class="gret '+(t.ret>=0?"pos":"neg")+'">'+pc(t.ret)+'</div>'+
+    '<div class="mut" style="font-size:12px">pelnas '+m(t.pnl)+'</div>'+
+    spark(0.5+i*0.3,C(t.ret))+
+    '<div class="grow"><span>Win<b>'+t.win+'%</b></span><span>Svertas<b>'+t.lev+'x</b></span><span>Sand./d<b>'+t.tpd+'</b></span></div>'+
+    '<button class="copy" style="margin-top:14px">Kopijuoti</button>'+
+  '</div></div>';
+});
+document.getElementById("v2").innerHTML=h2;
+
+var t0=D[0];
+var h3='<div class="hero"><div class="hl"><span class="badge">#1 šią savaitę</span>'+
+  '<div class="addr" style="margin-top:14px;font-size:14px">'+sh(t0.w)+' <span class="mut">'+t0.a+'</span></div>'+
+  '<div class="hret pos">'+pc(t0.ret)+'</div><div class="mut">pelnas '+m(t0.pnl)+' · aktyvus '+t0.act+'</div>'+
+  '<button class="copy" style="margin-top:18px;width:auto;padding:10px 22px">Kopijuoti šį treiderį</button></div>'+
+  '<div class="hr"><div class="hstat"><span class="l2">Win rate</span><span class="v2">'+t0.win+'%</span></div>'+
+  '<div class="hstat"><span class="l2">Vidutinis svertas</span><span class="v2">'+t0.lev+'x</span></div>'+
+  '<div class="hstat"><span class="l2">Sandorių per dieną</span><span class="v2">'+t0.tpd+'</span></div>'+
+  '<div class="hstat" style="border:none"><span class="l2">Grąža (90 d.)</span><span class="v2 pos">'+t0.d90+'</span></div></div></div>';
+var ht="";
+D.slice(1,6).forEach(function(t,i){
+  ht+='<div class="tr"><div class="mut" style="font-weight:700;text-align:center">'+(i+2)+'</div>'+
+    '<div class="addr">'+sh(t.w)+'<div class="mut" style="font-size:11px">'+t.a+'</div></div>'+
+    spark(0.7+i*0.2,C(t.ret))+
+    '<div>Win '+t.win+'%</div>'+
+    '<div class="big2 '+(t.ret>=0?"pos":"neg")+'">'+pc(t.ret)+'</div></div>';
+});
+h3+='<div class="tbl">'+ht+'</div>';
+document.getElementById("v3").innerHTML=h3;
+</script>
+</body>
+</html>

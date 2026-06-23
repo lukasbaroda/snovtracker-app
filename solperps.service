@@ -1,0 +1,14 @@
+[Unit]
+Description=Solana Copytrade — Perps (blue-chip SOL/BTC/ETH) Scanner
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/scanner
+ExecStart=/usr/bin/node /root/scanner/perps-scanner.js
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

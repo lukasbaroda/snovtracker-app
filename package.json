@@ -1,0 +1,12 @@
+{
+  "name": "solana-copytrade-scanner",
+  "version": "0.1.0",
+  "description": "Etapas 0 — read-only Solana treiderių skeneris (Helius)",
+  "type": "module",
+  "scripts": {
+    "start": "node scanner.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

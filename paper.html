@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SolMirror — Demo (paper) kopijavimas</title>
+<style>
+  :root{ --bg:#0b0e14; --card:#141925; --line:#222a3a; --chip:#1b2230; --text:#e6e9ef; --mut:#8a93a6; --grn:#16c784; --red:#ea3943; --acc:#5b8cff; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 18px 60px}
+  a{color:var(--acc);text-decoration:none}
+  .brand{font-size:22px;font-weight:800}.brand span{color:var(--acc)}
+  .demo{display:inline-block;background:var(--acc);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;margin-left:8px;vertical-align:middle}
+  .pos{color:var(--grn)} .neg{color:var(--red)} .mut{color:var(--mut)}
+  .addr{font-family:ui-monospace,monospace}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px}
+  input{background:var(--chip);border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:9px;font-size:15px;width:100%;margin-top:6px}
+  button{background:var(--acc);border:none;color:#fff;font-weight:600;padding:11px 18px;border-radius:9px;cursor:pointer;font-size:14px;margin-top:14px}
+  .kpis{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-top:6px}
+  @media(max-width:620px){.kpis{grid-template-columns:1fr 1fr}}
+  .kpi{background:var(--chip);border:1px solid var(--line);border-radius:10px;padding:12px}
+  .kpi .lab{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .kpi .v{font-size:22px;font-weight:800;margin-top:3px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--mut);font-weight:600;font-size:11px;text-transform:uppercase}
+  h3{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin:22px 0 6px}
+  .note{color:var(--mut);font-size:12px;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div><a href="index.html">← Atgal</a></div>
+  <div style="margin-top:10px" class="brand">Sol<span>Mirror</span><span class="demo">DEMO</span></div>
+  <div id="app"></div>
+</div>
+<script>
+var $=function(id){return document.getElementById(id);};
+var qs=new URLSearchParams(location.search);
+var money=function(n){var v=Math.round((n||0)*100)/100;return (v<0?"-$":"$")+Math.abs(v).toLocaleString("en-US",{maximumFractionDigits:2});};
+var pct=function(n){return (n>=0?"+":"")+(Math.round((n||0)*10)/10)+"%";};
+var ACT={open:"Atidarė",add:"Padidino",close:"Uždarė/sumažino"};
+var tstr=function(ts){return ts?new Date(ts*1000).toISOString().slice(0,16).replace("T"," "):"";};
+
+function createForm(wallet){
+  $("app").innerHTML='<div class="card">'+
+    '<div style="font-weight:700;font-size:16px">Sukurti demo kopijavimą</div>'+
+    '<div class="note">Virtualūs pinigai. Sistema seks šį treiderį ir mirror\'ins jo sandorius nuo dabar — pamatysi kaip būtų sekęsi, be jokios rizikos.</div>'+
+    '<div style="margin-top:14px">Treideris<br><input id="w" class="addr" value="'+(wallet||"")+'" placeholder="treiderio adresas"></div>'+
+    '<div style="margin-top:12px">Suma (USD)<br><input id="amt" type="number" value="1000" min="10"></div>'+
+    '<button onclick="create()">Sukurti demo sąskaitą</button>'+
+  '</div>';
+}
+async function create(){
+  var wallet=$("w").value.trim(), amount=parseFloat($("amt").value);
+  if(!wallet||!(amount>0)){alert("Įvesk adresą ir sumą");return;}
+  try{
+    var r=await fetch("/api/paper/create",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({wallet:wallet,amount:amount})});
+    var j=await r.json(); if(!j.ok) throw new Error(j.error||"klaida");
+    location.search="?id="+j.id;
+  }catch(e){ alert("Nepavyko (reikia paleisto server.js): "+e.message); }
+}
+async function view(id){
+  $("app").innerHTML='<div class="card mut">…kraunama</div>';
+  try{
+    var r=await fetch("/api/paper/state?id="+id,{cache:"no-store"});
+    var j=await r.json(); if(!j.ok) throw new Error(j.error||"klaida");
+    render(j.account, j.state);
+  }catch(e){ $("app").innerHTML='<div class="card neg">Klaida: '+e.message+'</div>'; }
+}
+function render(acc, s){
+  var open=(s.open||[]).map(function(o){
+    return '<tr><td>'+o.asset+' '+o.side+'</td><td>'+money(o.size)+'</td><td>$'+o.entry.toFixed(2)+'</td><td>$'+o.cur.toFixed(2)+'</td><td class="'+(o.uPnl>=0?"pos":"neg")+'">'+money(o.uPnl)+'</td></tr>';
+  }).join("") || '<tr><td colspan="5" class="mut">Atvirų pozicijų nėra</td></tr>';
+  var ord=(s.orders||[]).map(function(o){
+    var pnl=o.pnl==null?'<span class="mut">—</span>':'<span class="'+(o.pnl>=0?"pos":"neg")+'">'+money(o.pnl)+'</span>';
+    return '<tr><td>'+tstr(o.ts)+'</td><td>'+(ACT[o.action]||o.action)+' '+o.side+'</td><td>'+o.asset+'</td><td>$'+(o.price||0).toFixed(2)+'</td><td>'+money(o.size)+'</td><td>'+pnl+'</td></tr>';
+  }).join("") || '<tr><td colspan="6" class="mut">Dar nėra orderių (treideris nesandoriavo nuo prenumeratos pradžios)</td></tr>';
+  $("app").innerHTML='<div class="card">'+
+    '<div>Kopijuoja: <a class="addr" href="index.html">'+acc.wallet.slice(0,6)+'…'+acc.wallet.slice(-4)+'</a> · pradėta '+tstr(acc.startTs)+'</div>'+
+    '<div class="kpis">'+
+      '<div class="kpi"><div class="lab">Balansas (equity)</div><div class="v">'+money(s.equity)+'</div></div>'+
+      '<div class="kpi"><div class="lab">Grąža</div><div class="v '+(s.returnPct>=0?"pos":"neg")+'">'+pct(s.returnPct)+'</div></div>'+
+      '<div class="kpi"><div class="lab">Realizuota</div><div class="v '+(s.realized>=0?"pos":"neg")+'" style="font-size:18px">'+money(s.realized)+'</div></div>'+
+      '<div class="kpi"><div class="lab">Nerealizuota</div><div class="v '+(s.unreal>=0?"pos":"neg")+'" style="font-size:18px">'+money(s.unreal)+'</div></div>'+
+    '</div>'+
+    '<div class="note">Pradinė suma: '+money(s.start)+' · atnaujinama automatiškai kas 30 s.</div>'+
+    '<h3>Atviros pozicijos</h3><table><thead><tr><th>Turtas</th><th>Dydis</th><th>Įėjimas</th><th>Dabar</th><th>PnL</th></tr></thead><tbody>'+open+'</tbody></table>'+
+    '<h3>Orderiai (mirror\'inti iš treiderio)</h3><div style="overflow:auto"><table><thead><tr><th>Laikas</th><th>Veiksmas</th><th>Turtas</th><th>Kaina</th><th>Dydis</th><th>PnL</th></tr></thead><tbody>'+ord+'</tbody></table></div>'+
+  '</div>';
+}
+
+var id=qs.get("id");
+if(id){ view(id); setInterval(function(){view(id);},30000); }
+else { createForm(qs.get("wallet")); }
+</script>
+</body>
+</html>

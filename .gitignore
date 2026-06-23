@@ -1,0 +1,20 @@
+# Paslaptys ir duomenys — NIEKADA į git
+config.json
+data/
+node_modules/
+*.log
+*.tmp
+copy-STOP
+
+# Runtime failai (jei kur atsirastų šalia kodo)
+ranking.json
+perps-tiers.json
+perps-wallets.json
+overrides.json
+copy-log.json
+copy-state.json
+copy-accounts.json
+scan-status.json
+forward.json
+paper-accounts.json
+history/

@@ -1,0 +1,16 @@
+[Unit]
+Description=SolMirror web server (public + admin + API)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/scanner
+Environment=PORT=8000
+# jei `which node` rodo kita kelia - pakeisk:
+ExecStart=/usr/bin/node /root/scanner/server.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
