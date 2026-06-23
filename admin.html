@@ -59,6 +59,7 @@
     <button id="nav-logs" onclick="showTab('logs')">Logai</button>
     <button id="nav-insp" onclick="showTab('insp')">Inspektorius</button>
     <button id="nav-copy" onclick="showTab('copy')">Kopijavimas</button>
+    <button id="nav-rec" onclick="showTab('rec')">🎯 Rekomendacija</button>
   </nav>
 
   <section id="tab-overview" class="on">
@@ -108,16 +109,26 @@
     <details style="margin-top:14px"><summary class="mut" style="cursor:pointer;font-size:13px">▸ Veiksmų logas (detaliai)</summary><div class="tblwrap" style="margin-top:8px"><table class="tl"><thead><tr><th>Laikas</th><th>Treideris</th><th>Turtas</th><th>Pusė</th><th>Veiksmas</th><th>USDC</th><th>Svertas</th><th>Statusas</th></tr></thead><tbody id="copyrows"></tbody></table></div></details>
     <div class="legend">Variklis stebi whitelist treiderius (arba top pagal balą jei whitelist tuščias). Sandorio dydis = treiderio kolateralas × (tavo USDC kapitalas / treiderio peak).</div>
   </section>
+  <section id="tab-rec">
+    <div style="font-weight:600;margin-bottom:8px">🎯 Ką verta kopijuoti?</div>
+    <div class="controls">
+      <span class="mut" style="font-size:13px">Tavo suma (USD):</span>
+      <input id="recAmt" class="inp" type="number" value="1000" style="width:120px">
+      <button class="btn-lg" onclick="recommend(this)">Rekomenduoti</button>
+    </div>
+    <div id="recOut"><div class="mut" style="font-size:13px">Įvesk sumą ir spausk „Rekomenduoti" — iš top treiderių parinksiu geriausią kopijavimui ir paaiškinsiu kodėl (atsižvelgiant į grąžą, win%, imtį, aktyvumą, svertą ir ar tavo suma tinka pagal mokesčius).</div></div>
+  </section>
 </div>
 <script>
 var $=function(id){return document.getElementById(id);};
 var DATA=null, SORT="copyScore", DIR=-1, OV={blacklist:[],whitelist:[],forceTier:{}}, SHOWALL=false, TAB="overview", LOGT=null, COPYT=null;
 function showTab(t){
   TAB=t; try{localStorage.setItem("snov_tab",t);}catch(e){}
-  ["overview","board","logs","insp","copy"].forEach(function(x){ $("tab-"+x).classList.toggle("on",x===t); $("nav-"+x).classList.toggle("on",x===t); });
+  ["overview","board","logs","insp","copy","rec"].forEach(function(x){ $("tab-"+x).classList.toggle("on",x===t); $("nav-"+x).classList.toggle("on",x===t); });
   if(t==="board"){ if(!DATA||!DATA.ranking){ loadBoard();
 try{var _t=localStorage.getItem("snov_tab"); if(_t && ["overview","board","logs","insp","copy"].indexOf(_t)>=0) showTab(_t);}catch(e){} } else { render(); } }
   if(t==="logs"){ loadLogs(); if(!LOGT) LOGT=setInterval(loadLogs,3000); } else if(LOGT){ clearInterval(LOGT); LOGT=null; }
+  if(t==="rec" && !$("recOut").dataset.done){ /* nieko, laukia mygtuko */ }
   if(t==="copy"){ loadCopy(); if(!COPYT) COPYT=setInterval(loadCopy,8000); } else if(COPYT){ clearInterval(COPYT); COPYT=null; }
   if(t==="overview") loadStatus();
 }
@@ -399,6 +410,34 @@ function loadCopy(){
     var es=(j.entries||[]); var stc={executed:"pos",error:"neg",blocked:"warn"}; var tb=$("copyrows"); if(!tb)return;
     tb.innerHTML=es.length?es.map(function(e){var t=(e.at||"").replace("T"," ").slice(5,19);var sc=stc[e.status]||"mut";return '<tr><td class="mut">'+t+'</td><td class="w">'+(e.wallet?e.wallet.slice(0,4)+"…"+e.wallet.slice(-4):"")+'</td><td>'+(e.asset||"")+'</td><td class="'+(e.side==="long"?"pos":"neg")+'">'+(e.side||"")+'</td><td>'+(e.action||"")+'</td><td>'+(e.myCollUsd!=null?e.myCollUsd:"")+'</td><td>'+(e.lev||0)+'x</td><td class="'+sc+'" title="'+(e.note||e.status||"").replace(/"/g,"")+'">'+(e.status||"")+(e.note?' <span class="mut" style="font-size:10px">'+e.note+'</span>':'')+'</td></tr>';}).join(""):'<tr><td colspan="8" class="mut">Tuščia</td></tr>';
   }).catch(function(){});
+}
+async function recommend(btn){
+  var amt=parseFloat($("recAmt").value)||1000; var o=btn.textContent; btn.disabled=true; btn.textContent="…";
+  $("recOut").innerHTML='<div class="mut">Skaičiuoju…</div>';
+  try{
+    var r=await fetch("/api/board?sort=copyScore&asset=Visi&offset=0&limit=30",{cache:"no-store"}); var j=await r.json(); var rows=(j.rows||[]); var now=Date.now()/1000;
+    var scored=rows.map(function(t){ var ds=t.lastTs?(now-t.lastTs)/86400:999; var winF=(t.winRatePct||0)/100; var sampF=Math.min(1,(t.closed||0)/15); var actF=ds<=7?1:(ds<=14?0.8:(ds<=30?0.5:0.2)); var lev=t.avgLev||0; var levF=lev<=15?1:(lev<=30?0.8:(lev<=50?0.6:0.4)); var consF=0.5+0.5*((t.consistencyPct||0)/100); var fit=amt>=(t.recommendedMinUsd||0)?1:0.4; var sc=(t.copyScore||0)*winF*sampF*actF*levF*consF*fit; return {t:t,s:sc,ds:ds,fit:fit}; }).sort(function(a,b){return b.s-a.s;});
+    var top=scored.slice(0,3);
+    if(!top.length){ $("recOut").innerHTML='<div class="empty">Nėra tinkamų treiderių (gal dar kraunasi lentos duomenys).</div>'; return; }
+    $("recOut").innerHTML=top.map(function(x,i){return recCard(x,i,amt);}).join("");
+    $("recOut").dataset.done="1";
+  }catch(e){ $("recOut").innerHTML='<div class="empty">Klaida: '+e.message+'</div>'; }
+  finally{ btn.disabled=false; btn.textContent=o; }
+}
+function recCard(x,i,amt){
+  var t=x.t; var best=i===0; var lev=t.avgLev||0; var rs=[];
+  rs.push("grąža <b>+"+(t.returnPct||0)+"%</b> (po mokesčių), realus pelnas $"+Math.round(t.roiPct||0));
+  rs.push("laimi <b>"+(t.winRatePct||0)+"%</b> sandorių");
+  rs.push("<b>"+(t.closed||0)+"</b> sandorių per "+(t.daysLive||0)+" d."+((t.closed||0)>=12?" — gera imtis (patikima)":" — maža imtis (mažiau patikima)"));
+  rs.push("aktyvus "+(x.ds<1?"šiandien":"prieš "+Math.round(x.ds)+" d.")+(x.ds<=7?" ✓":" ⚠"));
+  rs.push(lev<=15?("saugesnis svertas "+lev+"x"):("⚠ didelis svertas "+lev+"x (didesnė rizika)"));
+  rs.push("profilis: "+(t.profile||"—"));
+  rs.push(x.fit>=1?("tavo $"+amt+" tinka (rekomenduojama nuo $"+(t.recommendedMinUsd||0)+") ✓"):("⚠ tavo $"+amt+" mažoka — rekomenduojama nuo $"+(t.recommendedMinUsd||0)+" (kitaip mokesčiai suvalgo)"));
+  return '<div style="background:var(--card);border:1px solid '+(best?"var(--green)":"var(--line)")+';border-radius:14px;padding:16px;margin-bottom:12px">'+
+    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-size:16px;font-weight:700;color:'+(best?"var(--green)":"var(--text)")+'">'+(best?"🏆 Geriausias kopijavimui":("#"+(i+1)))+'</span> <span class="w">'+t.wallet.slice(0,4)+"…"+t.wallet.slice(-4)+'</span> <span class="mut">balas '+(t.copyScore||0)+'</span></div>'+
+    '<div class="mut" style="font-size:12px;margin-top:6px">Kodėl:</div><ul style="margin:4px 0 0;padding-left:18px;line-height:1.85;font-size:13px">'+rs.map(function(r){return "<li>"+r+"</li>";}).join("")+'</ul>'+
+    (best?'<button class="btn-lg" style="margin-top:12px" onclick="ovAction(\'whitelist\',\''+t.wallet+'\',null,'+amt+')">⭐ Pradėti kopijuoti ($'+amt+')</button>':'')+
+  '</div>';
 }
 function loadBoard(){ $("content").innerHTML='<div class="empty">Kraunama…</div>'; fetch("/api/ranking",{cache:"no-store"}).then(function(r){return r.json();}).then(function(j){DATA=j; if(TAB==="board")render();}).catch(function(){ $("content").innerHTML='<div class="empty">Nepavyko užkrauti ranking.json</div>'; }); }
 loadBoard();
