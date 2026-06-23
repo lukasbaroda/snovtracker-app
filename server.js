@@ -84,6 +84,7 @@ const server = http.createServer(async (req, res) => {
     if (action === "blacklist") { ov.blacklist = [...new Set([...rm(ov.blacklist, wallet), wallet])]; ov.whitelist = rm(ov.whitelist, wallet); delete ov.forceTier[wallet]; }
     else if (action === "whitelist") { ov.whitelist = [...new Set([...rm(ov.whitelist, wallet), wallet])]; ov.blacklist = rm(ov.blacklist, wallet); if (amount > 0) { ov.copyAmounts[wallet] = Math.round(amount); if (!ov.copyStart[wallet]) ov.copyStart[wallet] = Math.floor(Date.now() / 1000); } }
     else if (action === "settier") { if (["A", "B", "C"].includes(tier)) ov.forceTier[wallet] = tier; else delete ov.forceTier[wallet]; }
+    else if (action === "restart") { if (ov.copyStart) ov.copyStart[wallet] = Math.floor(Date.now() / 1000); }
     else if (action === "reset") { ov.blacklist = rm(ov.blacklist, wallet); ov.whitelist = rm(ov.whitelist, wallet); delete ov.forceTier[wallet]; delete ov.copyAmounts[wallet]; delete ov.copyStart[wallet]; }
     else return send(400, TYPES[".json"], JSON.stringify({ error: "bad action" }));
     saveOv(ov);
@@ -215,6 +216,8 @@ const server = http.createServer(async (req, res) => {
 
   if (url.pathname === "/api/copyaccounts" && req.method === "GET") {
     const d = jload(path.join(DATA, "copy-accounts.json"), { accounts: [] });
+    const wl = new Set((norm(loadOv()).whitelist) || []);
+    if (wl.size) d.accounts = (d.accounts || []).filter((a) => wl.has(a.wallet));
     d.live = !!CFG.copyLive; d.stop = fs.existsSync(path.join(DATA, "copy-STOP"));
     return send(200, TYPES[".json"], JSON.stringify(d));
   }

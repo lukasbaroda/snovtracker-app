@@ -376,6 +376,8 @@ function loadLogs(){
 }
 function load(j){try{DATA=(typeof j==="string")?JSON.parse(j):j;render();}catch(e){$("content").innerHTML='<div class="empty">Klaida: '+e.message+'</div>';}}
 function miniSpark(curve,col){ if(!curve||curve.length<2) return '<svg width="120" height="38"></svg>'; var v=curve.map(function(c){return c.bankroll;}); var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),W=120,H=38; var pts=curve.map(function(c,i){var x=i*W/(curve.length-1); var y=H-2-(mx===mn?H/2:(c.bankroll-mn)/(mx-mn)*(H-4)); return x.toFixed(1)+","+y.toFixed(1);}).join(" "); return '<svg width="'+W+'" height="'+H+'" style="display:block"><polyline points="'+pts+'" fill="none" stroke="'+col+'" stroke-width="2"/></svg>'; }
+function copyRemove(w){ if(!confirm("Pašalinti šį treiderį iš kopijavimo? (jo statistika dings)"))return; ovAction("reset",w); setTimeout(loadCopy,700); }
+function copyRestart(w){ if(!confirm("Pradėti šio treiderio statistiką iš naujo (nuo dabar)? Sena dings."))return; ovAction("restart",w); setTimeout(loadCopy,700); }
 function toggleCC(i){ var e=document.getElementById("cc"+i); if(e) e.style.display = e.style.display==="none"?"block":"none"; }
 function copyCard(a,i){
   var pos=(a.returnPct||0)>=0; var col=pos?"#3fb950":"#f85149";
@@ -388,7 +390,8 @@ function copyCard(a,i){
     '<div onclick="toggleCC('+i+')" style="padding:14px 16px;display:grid;grid-template-columns:1fr 120px 160px;gap:14px;align-items:center;cursor:pointer">'+
       '<div><div class="w" style="font-weight:600;font-size:14px">'+a.wallet.slice(0,4)+'…'+a.wallet.slice(-4)+' <span class="mut" style="font-size:11px">▾ sandoriai</span></div>'+
         '<div class="mut" style="font-size:12px;margin-top:4px">uždėta <b style="color:var(--text)">$'+a.amount+'</b> · nuo '+since+' · <b style="color:var(--text)">'+days+'</b> d. kopijuojama</div>'+
-        '<div class="mut" style="font-size:12px;margin-top:2px">sandorių: <b style="color:var(--text)">'+a.tradesCount+'</b> · win '+(a.winPct||0)+'% · svertas '+(a.avgLev||0)+'x · atviri '+a.openCount+(opensTxt?" ("+opensTxt+")":"")+'</div></div>'+
+        '<div class="mut" style="font-size:12px;margin-top:2px">sandorių: <b style="color:var(--text)">'+a.tradesCount+'</b> · win '+(a.winPct||0)+'% · svertas '+(a.avgLev||0)+'x · atviri '+a.openCount+(opensTxt?" ("+opensTxt+")":"")+'</div>'+
+        '<div style="margin-top:8px" onclick="event.stopPropagation()"><button class="mini" onclick="copyRestart(\''+a.wallet+'\')" title="Statistika iš naujo (nuo dabar)">↻ iš naujo</button> <button class="mini" onclick="copyRemove(\''+a.wallet+'\')" title="Pašalinti iš kopijavimo">✕ pašalinti</button></div></div>'+
       miniSpark(a.curve,col)+
       '<div style="text-align:right"><div style="font-size:22px;font-weight:800;color:'+col+'">'+(pos?"+":"")+(a.returnPct||0)+'% <span class="mut" style="font-size:11px;font-weight:400">ROI</span></div>'+
         '<div class="mut" style="font-size:12px;margin-top:2px">uždirbo <b style="color:'+col+'">'+((a.realized||0)>=0?"+":"")+"$"+Math.round(a.realized||0)+'</b></div>'+
