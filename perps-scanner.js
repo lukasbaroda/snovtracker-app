@@ -42,7 +42,7 @@ const MIN_CLOSED = CFG.minClosed ?? 3;
 const SIM_AMOUNT = CFG.simAmount ?? 1000;
 const TIERS = CFG.simTiers ?? [100, 500, 1000];
 const SIM_WINDOWS = CFG.simWindowsDays ?? [30, 60, 90];
-const MAX_WALLETS = CFG.maxWallets ?? 300;
+const MAX_WALLETS = Math.min(CFG.maxWallets ?? 300, 300); // hard cap - kad neapkrautų serverio
 const DRAIN_MS = (CFG.drainSec ?? 90) * 1000;
 const DRAIN_MIN = CFG.drainThreshold ?? 400; // drenuojam greitai tik jei liko daugiau nei tiek (kad nesisuktų amžinai) // jei eileje liko virs limito, sekantis skenas po tiek (greitas drenavimas)
 const MIN_CAPITAL = CFG.minVolumeUsd ?? 100; // min ideto collateral (pasitikejimo filtras)
@@ -257,7 +257,7 @@ async function run() {
   for (const w of CFG.wallets || []) watch.add(w);
   for (const s of loadSeeds()) watch.add(s);
   const before = watch.size;
-  const disc = (CFG.discoveryPages > 0) ? await discoverPerpsTraders(CFG.discoveryPages) : [];
+  const disc = (CFG.discoveryPages > 0) ? await discoverPerpsTraders(Math.min(CFG.discoveryPages, 1)) : []; // ribota discovery
   for (const d of disc) watch.add(d);
   if (disc.length) console.log(`  Perps programa: +${watch.size - before} nauju (viso ${watch.size})`);
   // rankiniai valdikliai (is admin panelės)
@@ -371,7 +371,7 @@ async function run() {
       try { fs.writeFileSync(path.join(HIST_DIR, wallet + ".json"), JSON.stringify(history.slice(0, 1000))); } catch (e) {} // pilna istorija dashboard'ui
     } else delete cache[wallet];
     if (++i % 20 === 0) { console.log(`  apdorota ${i}/${wallets.length}`); setScan({ running: true, startedAt: Date.now(), progress: i, total: wallets.length, watched: watch.size }); }
-    await sleep(70);
+    await sleep(140);
   }
 
   // RIKIAVIMAS: forward $1000 demo grąža (gyvas track record); tiebreak - sandoriai, tada balas

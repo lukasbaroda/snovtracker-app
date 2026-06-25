@@ -119,7 +119,7 @@ const server = http.createServer(async (req, res) => {
   // --- realtime logai (journald arba scanner.log) ---
   if (url.pathname === "/api/logs" && req.method === "GET") {
     const n = Math.min(500, parseInt(url.searchParams.get("lines") || "200"));
-    const out = await sh(`journalctl -u ${SERVICE} -n ${n} --no-pager 2>/dev/null || tail -n ${n} ${path.join(DATA, "scanner.log")} 2>/dev/null`);
+    const out = await sh(`timeout 5 journalctl -u ${SERVICE} -n ${n} --no-pager 2>/dev/null || tail -n ${n} ${path.join(DATA, "scanner.log")} 2>/dev/null`);
     return send(200, TYPES[".txt"], out || "(nėra logų)");
   }
   // --- serviso valdymas (restart / start / stop) ---
@@ -211,7 +211,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (url.pathname === "/api/ranking" && req.method === "GET") {
-    return send(200, TYPES[".json"], JSON.stringify(getRank()));
+    const _r = getRank(); const _light = { generatedAt: _r.generatedAt, ranking: (_r.ranking || []).map(function (x) { var c = Object.assign({}, x); delete c.curve; return c; }) }; return send(200, TYPES[".json"], JSON.stringify(_light));
   }
 
   if (url.pathname === "/api/copyaccounts" && req.method === "GET") {
